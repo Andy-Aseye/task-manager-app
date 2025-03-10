@@ -26,7 +26,6 @@ Component Structure: I structured the application into distinct components: Navb
 Styling: I utilized modern CSS practices to ensure a clean design. The layout is responsive, adapting to various screen sizes, and incorporates consistent spacing, typography, and color schemes.
 Code Structure and State Management
 For state management, I leveraged React's Context API. This decision was driven by the need to share state across multiple components without resorting to prop drilling, thereby maintaining a cleaner codebase. 
-LEGACY.REACTJS.ORG
 
 TaskContext: Manages the state related to tasks, including adding, updating, deleting, and reordering tasks.
 FilterContext: Handles the current filter settings, allowing users to view tasks based on their selected priority.
