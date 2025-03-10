@@ -33,3 +33,369 @@ body {
   width: 100%;
   overflow: hidden;
 }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--primary-color);
+  height: 100vh;
+  color: white;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar_container_inner {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo_img {
+  width: 32px;
+  height: 32px;
+}
+
+.app_name {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* Main Content Area */
+.main_content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--spacing-md);
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: var(--spacing-lg);
+}
+
+.filter_group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.filter_label {
+  font-weight: 500;
+  color: #555;
+}
+
+.priority_filter {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  background-color: white;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 120px;
+}
+
+.priority_filter:hover,
+.priority_filter:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.add-task-button {
+  display: flex;
+  align-items: center;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  font-size: 14px;
+}
+
+.add-task-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+/* Task List */
+.task_list_container {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow-y: auto;
+  flex: 1;
+  padding: var(--spacing-md);
+}
+
+.empty_list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #888;
+  text-align: center;
+}
+
+.empty_list_icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+  color: #ddd;
+}
+
+/* Task Items */
+.task_item {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  background-color: white;
+  border: 1px solid #eee;
+  margin-bottom: var(--spacing-md);
+  transition: var(--transition);
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task_item:hover {
+  box-shadow: var(--box-shadow-hover);
+  border-color: #ddd;
+}
+
+.task_item:active {
+  cursor: grabbing;
+}
+
+
+.task-item-inner {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+}
+.task_content {
+  display: flex;
+  width: 80%;
+justify-content: space-between;
+}
+
+.task_title{
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1d1b1b;
+}
+
+.task_description {
+  color: #666;
+  font-size: 14px;
+}
+
+.task_actions {
+  display: flex;
+  gap: 12px;
+}
+
+.task_action_button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.task_action_button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Priority Indicators */
+.priority_indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.priority_low {
+  color: #37863a;
+}
+
+.priority_medium {
+  color: #ff9800;
+}
+
+.priority_high {
+  color: #bf362c;
+}
+
+/* Dialog Styles */
+.dialog_overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+}
+
+.dialog_content {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 450px;
+  max-height: 85vh;
+  padding: var(--spacing-lg);
+  z-index: 1001;
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.dialog_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.dialog_title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.close_button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form_group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form_label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #555;
+}
+
+.form_input,
+.form_textarea,
+.form_select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.form_input:focus,
+.form_textarea:focus,
+.form_select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(1, 112, 240, 0.1);
+}
+
+.form_textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form_footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  font-size: 14px;
+}
+
+.btn_primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn_primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn_danger {
+  color: #f44336;
+  background-color: transparent;
+}
+
+.btn_danger:hover {
+  background-color: #ffebee;
+}
+
+/* Animations */
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Drag and Drop styles */
+.dragging {
+  opacity: 0.6;
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
