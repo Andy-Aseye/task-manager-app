@@ -1,54 +1,39 @@
-# React + TypeScript + Vite
+Here is a simple guide to installing and running the Task Manager app:
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- First, copy the link from the GitHub clone dropdown:
 
-Currently, two official plugins are available:
+Run "git clone <link>" in the terminal of your IDE
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Second, run this command "cd taskkit" to enter into the vite react app.
 
-## Expanding the ESLint configuration
+- Third, run "npm install" after the repo has been cloned locally. A node version above "18" would be preferable to avoid version issues.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Running these above commands should get the app running locally. In case of any issues, feel free to contact me at: andyaseye@gmail.com
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Overview
+I developed TaskKit, a task management application, to provide users with an intuitive interface for organizing and prioritizing their tasks. Drawing inspiration from platforms like ClickUp, I aimed to create a clean and user-friendly design that emphasizes functionality and aesthetics.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Key Features
+Sidebar Navigation: Located on the left, the sidebar offers quick access to the application's main sections, ensuring seamless navigation.
+Task Area: On the right, users can filter tasks by priority and view a list of tasks tailored to their preferences.
+Task Management: Users can add new tasks, edit existing ones, and delete tasks as needed.
+Drag-and-Drop Functionality: Tasks can be reordered effortlessly using drag-and-drop interactions, enhancing the user experience.
+Design Approach
+To achieve a visually pleasing and organized layout:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+Component Structure: I structured the application into distinct components: Navbar, Sidebar, TaskList, and TaskItem. This modular approach promotes reusability and simplifies maintenance.
+Styling: I utilized modern CSS practices to ensure a clean design. The layout is responsive, adapting to various screen sizes, and incorporates consistent spacing, typography, and color schemes.
+Code Structure and State Management
+For state management, I leveraged React's Context API. This decision was driven by the need to share state across multiple components without resorting to prop drilling, thereby maintaining a cleaner codebase. 
+LEGACY.REACTJS.ORG
+
+TaskContext: Manages the state related to tasks, including adding, updating, deleting, and reordering tasks.
+FilterContext: Handles the current filter settings, allowing users to view tasks based on their selected priority.
+By organizing the code into these contexts, I ensured that each part of the application has access to the specific state it requires, promoting scalability and maintainability.
+
+Conclusion
+TaskKit embodies my commitment to creating efficient and user-centric applications. By focusing on a clear design and effective state management, I aimed to deliver a tool that enhances productivity and provides a seamless user experience.
+
+
+
