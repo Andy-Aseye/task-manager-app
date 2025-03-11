@@ -1,11 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { TaskContext } from "../contexts/TaskContext";
 import { FilterContext } from "../contexts/FilterContext";
 import TaskList from "../components/TaskList";
-import { DndContext } from "@dnd-kit/core";
+import { TaskInt } from "../interface";
 
-// Mock TaskItem component
+// Mock TaskItem with proper typing
 jest.mock("../components/TaskItem", () => ({
   __esModule: true,
   default: ({ task }: { task: { title: string } }) => (
@@ -13,78 +13,184 @@ jest.mock("../components/TaskItem", () => ({
   ),
 }));
 
-// Mock Lucide Icons
 jest.mock("lucide-react", () => ({
-  ClipboardList: () => <div data-testid="clipboard-icon" />,
+  ClipboardList: () => <div role="img" aria-label="clipboard-icon" />,
+}));
+
+// Mock dnd-kit components
+// Update DnD mock in TaskList.test.tsx
+jest.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => children,
+  useSensor: jest.fn(),
+  useSensors: jest.fn().mockImplementation(() => ([jest.fn()])),
+  closestCenter: jest.fn(),
+}));
+
+jest.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => children,
+  verticalListSortingStrategy: {},
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: () => {},
+    transform: null,
+    transition: null,
+  }),
 }));
 
 describe("TaskList Component", () => {
+ const mockTasks: TaskInt[] = [
+   {
+     id: "1",
+     title: "Task One",
+     description: "Description One",
+     priority: "High",
+   },
+   {
+     id: "2",
+     title: "Task Two",
+     description: "Description Two",
+     priority: "Medium",
+   },
+   {
+     id: "3",
+     title: "Task Three",
+     description: "Description Three",
+     priority: "Low",
+   },
+ ];
+
   const mockReorderTasks = jest.fn();
 
-  const tasks: any = [
-    { id: "1", title: "Task One", priority: "High" },
-    { id: "2", title: "Task Two", priority: "Medium" },
-    { id: "3", title: "Task Three", priority: "Low" },
-  ];
-
-  const renderTaskList = (priority = "All") => {
-    return render(
-      <TaskContext.Provider value={{ tasks, reorderTasks: mockReorderTasks }}>
+  const renderComponent = (priority = "All") =>
+    render(
+      <TaskContext.Provider
+        value={{
+          tasks: mockTasks,
+          reorderTasks: mockReorderTasks,
+          addTask: jest.fn(),
+          deleteTask: jest.fn(),
+          updateTask: jest.fn(),
+        }}
+      >
         <FilterContext.Provider value={{ priority, setPriority: jest.fn() }}>
           <TaskList />
         </FilterContext.Provider>
       </TaskContext.Provider>
     );
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders tasks correctly", () => {
-    renderTaskList();
+  it("renders all tasks when no filter is applied", () => {
+    renderComponent();
 
-    expect(screen.getByText("Task One")).not.toBeNull();
-    expect(screen.getByText("Task Two")).not.toBeNull();
-    expect(screen.getByText("Task Three")).not.toBeNull();
+    const items = screen.getAllByTestId("task-item");
+    expect(items).toHaveLength(3);
+    expect(items.map((i) => i.textContent)).toEqual([
+      "Task One",
+      "Task Two",
+      "Task Three",
+    ]);
   });
 
-  it("filters tasks by priority", () => {
-    renderTaskList("High");
+  describe("Task Filtering", () => {
+    it.each([
+      ["High", 1],
+      ["Medium", 1],
+      ["Low", 1],
+      ["All", 3],
+    ])("filters tasks for %s priority", (priority, expectedCount) => {
+      renderComponent(priority as string);
 
-    expect(screen.getByText("Task One")).not.toBeNull();
-    expect(screen.queryByText("Task Two")).toBeNull();
-    expect(screen.queryByText("Task Three")).toBeNull();
-  });
-
-  it("shows empty state when no tasks match filter", () => {
-    renderTaskList("Urgent");
-
-    expect(screen.getByText("No tasks found")).not.toBeNull();
-    expect(screen.getByText("Add a new task to get started")).not.toBeNull();
-    expect(screen.getByTestId("clipboard-icon")).not.toBeNull();
-  });
-
-  it("handles drag-and-drop reordering", () => {
-    renderTaskList();
-
-    // Simulate drag end event
-    fireEvent.dragEnd(screen.getByText("Task One"), {
-      active: { id: "1" },
-      over: { id: "3" },
+      const items = screen.queryAllByTestId("task-item");
+      expect(items).toHaveLength(expectedCount);
     });
 
-    expect(mockReorderTasks).toHaveBeenCalledWith(0, 2);
+    it("shows empty state when no tasks match filter", () => {
+      renderComponent("High");
+
+    expect(screen.getByRole("img", { name: "No tasks" })).toBeInTheDocument();
+      expect(screen.getByText("No tasks found")).toBeInTheDocument();
+      expect(
+        screen.getByText("Add a new task to get started")
+      ).toBeInTheDocument();
+    });
   });
 
-  it("throws an error if used outside required providers", () => {
-    const originalError = console.error;
-    console.error = jest.fn(); // Suppress React context error logs
+  describe("Drag and Drop", () => {
+    it("reorders tasks on successful drag", () => {
+      renderComponent();
 
-    expect(() => {
-      render(<TaskList />);
-    }).toThrow("TaskList must be used within a TaskProvider");
+      const activeTask = screen.getByText("Task One");
+      const overTask = screen.getByText("Task Three");
 
-    console.error = originalError; // Restore console.error
+      fireEvent.dragStart(activeTask);
+      fireEvent.dragOver(overTask);
+      fireEvent.drop(overTask);
+      fireEvent.dragEnd(activeTask, {
+        active: { id: "1" },
+        over: { id: "3" },
+      });
+
+      expect(mockReorderTasks).toHaveBeenCalledWith(0, 2);
+    });
+
+    it("does nothing when dragging over invalid target", () => {
+      renderComponent();
+
+      const activeTask = screen.getByText("Task One");
+      fireEvent.dragEnd(activeTask, {
+        active: { id: "1" },
+        over: null,
+      });
+
+      expect(mockReorderTasks).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("throws error when missing TaskContext", () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      expect(() =>
+        render(
+          <FilterContext.Provider
+            value={{ priority: "All", setPriority: jest.fn() }}
+          >
+            <TaskList />
+          </FilterContext.Provider>
+        )
+      ).toThrow("TaskList must be used within a TaskProvider");
+
+      consoleError.mockRestore();
+    });
+
+    it("throws error when missing FilterContext", () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      expect(() =>
+        render(
+          <TaskContext.Provider
+            value={{
+              tasks: [],
+              reorderTasks: jest.fn(),
+              addTask: jest.fn(),
+              deleteTask: jest.fn(),
+              updateTask: jest.fn(),
+            }}
+          >
+            <TaskList />
+          </TaskContext.Provider>
+        )
+      ).toThrow("TaskList must be used within a FilterProvider");
+
+      consoleError.mockRestore();
+    });
   });
 });

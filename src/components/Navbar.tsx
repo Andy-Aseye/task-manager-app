@@ -36,7 +36,8 @@ const Navbar = () => {
       return;
     }
 
-    addTask({ id: uuidv4(), ...newTask });
+    const typedPriority = newTask.priority as "Low" | "Medium" | "High";
+    addTask({ id: uuidv4(), ...newTask, priority: typedPriority });
     setNewTask({ title: "", description: "", priority: "Low" });
     setIsOpen(false);
   };
@@ -49,6 +50,7 @@ const Navbar = () => {
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
           className="priority_filter"
+          aria-label="Filter tasks by priority"
         >
           <option value="All">All Tasks</option>
           <option value="Low">Low Priority</option>
@@ -74,7 +76,9 @@ const Navbar = () => {
 
           <form>
             <div className="form_group">
-              <label className="form_label">Title</label>
+              <label htmlFor="title-input" className="form_label">
+                Title
+              </label>
               <input
                 type="text"
                 value={newTask.title}
@@ -87,7 +91,9 @@ const Navbar = () => {
             </div>
 
             <div className="form_group">
-              <label className="form_label">Description</label>
+              <label htmlFor="description-input" className="form_label">
+                Description
+              </label>
               <textarea
                 value={newTask.description}
                 onChange={(e) =>
@@ -99,7 +105,9 @@ const Navbar = () => {
             </div>
 
             <div className="form_group">
-              <label className="form_label">Priority</label>
+              <label htmlFor="priority-input" className="form_label">
+                Priority
+              </label>
               <select
                 value={newTask.priority}
                 onChange={(e) =>

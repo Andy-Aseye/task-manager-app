@@ -62,7 +62,11 @@ const TaskList = () => {
     <div className="task_list_container">
       {filteredTasks.length === 0 ? (
         <div className="empty_list">
-          <ClipboardList size={48} className="empty_list_icon" />
+          <ClipboardList
+            size={48}
+            className="empty_list_icon"
+            aria-label="No tasks"
+          />
           <p>No tasks found</p>
           <p>Add a new task to get started</p>
         </div>

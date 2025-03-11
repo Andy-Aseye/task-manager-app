@@ -1,9 +1,13 @@
 const Sidebar = () => {
   return (
-    <div className="sidebar">
+    <div
+      className="sidebar"
+      aria-label="Application sidebar"
+      role="complementary" // Add this role
+    >
       <div className="sidebar_container_inner">
-        <img src="/todo.png" alt="TaskKit" className="logo_img" />
-        <p className="app_name">TaskKit</p>
+        <img className="logo_img" src="/todo.png" alt="TaskKit" />
+        <h1 className="app_name">TaskKit</h1> {/* Change p to h1 */}
       </div>
     </div>
   );

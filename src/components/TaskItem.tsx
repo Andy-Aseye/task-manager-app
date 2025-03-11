@@ -40,7 +40,6 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
           <h3 className="task_title">{task.title}</h3>
           <p className="task_description">{task.description}</p>
           <span className={`priority_indicator ${getPriorityClass()}`}>
-            
             {task.priority}
           </span>
         </div>
@@ -48,12 +47,14 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
           <button
             onClick={() => setIsOpen(true)}
             className="task_action_button"
+            aria-label="Edit task"
           >
             <Pencil className="w-5 h-5 text-blue-500" />
           </button>
           <button
             onClick={() => deleteTask(task.id)}
             className="task_action_button"
+            aria-label="Delete task"
           >
             <Trash className="w-5 h-5 text-red-500" />
           </button>
@@ -66,7 +67,11 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
         <DialogContent className="dialog_content">
           <div className="dialog_header">
             <DialogTitle className="dialog_title">Edit Task</DialogTitle>
-            <button onClick={() => setIsOpen(false)} className="close_button">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="close_button"
+              aria-label="Close dialog"
+            >
               <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
             </button>
           </div>
@@ -85,7 +90,7 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
             </div>
 
             <div className="form_group">
-              <label className="form_label">Description</label>
+              <label className="form_label" aria-label="description">Description</label>
               <textarea
                 value={editedTask.description}
                 onChange={(e) =>
@@ -96,7 +101,7 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
             </div>
 
             <div className="form_group">
-              <label className="form_label">Priority</label>
+              <label className="form_label" aria-label="priority">Priority</label>
               <select
                 value={editedTask.priority}
                 onChange={(e) =>

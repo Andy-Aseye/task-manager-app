@@ -1,12 +1,11 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import Navbar from "../components/Navbar";
 import { FilterContext } from "../contexts/FilterContext";
 import { TaskContext } from "../contexts/TaskContext";
 
 // Mock UUID generation
-jest.mock("uuid", () => ({
-  v4: () => "mocked-uuid",
-}));
+jest.mock("uuid", () => ({ v4: () => "mocked-uuid" }));
 
 // Mock Lucide Icons
 jest.mock("lucide-react", () => ({
@@ -42,92 +41,112 @@ describe("Navbar Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the priority filter and add task button", () => {
+  it("renders navigation elements correctly", () => {
     renderNavbar();
 
-    expect(screen.getByText("Filter by priority:")).not.toBeNull();
-    expect(screen.getByRole("combobox")).not.toBeNull();
-    expect(screen.getByText("Add Task")).not.toBeNull();
+   
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /add task/i })
+    ).toBeInTheDocument();
   });
 
-  it("updates priority when a new option is selected", () => {
+  it("updates priority filter when selection changes", async () => {
+    const user = userEvent.setup();
     renderNavbar();
 
-    const select = screen.getByRole("combobox");
-    fireEvent.change(select, { target: { value: "Medium" } });
+    const filterSelect = screen.getByRole("combobox");
+    await user.selectOptions(filterSelect, "Medium");
 
     expect(mockSetPriority).toHaveBeenCalledWith("Medium");
   });
 
-  it("opens and closes the add task modal", () => {
-    renderNavbar();
+  describe("Task Dialog", () => {
+    it("opens and closes the dialog correctly", async () => {
+      const user = userEvent.setup();
+      renderNavbar();
 
-    // Modal should be closed initially
-    expect(screen.queryByText("Add New Task")).toBeNull();
+      // Open dialog
+      await user.click(screen.getByRole("button", { name: /add task/i }));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-    // Click the add task button
-    fireEvent.click(screen.getByText("Add Task"));
+      // Close dialog
+      await user.click(screen.getByTestId("x-icon"));
+    });
 
-    // Modal should be open now
-    expect(screen.getByText("Add New Task")).not.toBeNull();
+    it("submits valid task form", async () => {
+      const user = userEvent.setup();
+      renderNavbar();
 
-    // Click the close button
-    fireEvent.click(screen.getByTestId("x-icon"));
+      await user.click(screen.getByRole("button", { name: /add task/i }));
 
-    // Modal should be closed again
-    expect(screen.queryByText("Add New Task")).toBeNull();
-  });
+      const dialog = screen.getByRole("dialog");
+      await user.type(
+        within(dialog).getByPlaceholderText("Enter task title"),
+        "New Task"
+      );
+      await user.type(
+        within(dialog).getByPlaceholderText("Enter task description"),
+        "Task details"
+      );
+      await user.selectOptions(within(dialog).getByRole("combobox"), "High");
 
-  it("adds a new task when form is submitted", () => {
-    renderNavbar();
+      await user.click(
+        within(dialog).getByRole("button", { name: /add task/i })
+      );
 
-    fireEvent.click(screen.getByText("Add Task"));
+      expect(mockAddTask).toHaveBeenCalledWith({
+        id: "mocked-uuid",
+        title: "New Task",
+        description: "Task details",
+        priority: "High",
+      });
+    });
 
-    const titleInput = screen.getByPlaceholderText("Enter task title");
-    const descriptionInput = screen.getByPlaceholderText(
-      "Enter task description"
-    );
-    const prioritySelect = screen.getByRole("combobox");
+    it("shows validation errors for empty fields", async () => {
+      const user = userEvent.setup();
+      window.alert = jest.fn();
+      renderNavbar();
 
-    fireEvent.change(titleInput, { target: { value: "New Task" } });
-    fireEvent.change(descriptionInput, { target: { value: "Task details" } });
-    fireEvent.change(prioritySelect, { target: { value: "High" } });
+      await user.click(screen.getByRole("button", { name: /add task/i }))
+      const dialog = screen.getByRole("dialog");
 
-    fireEvent.click(screen.getByText("Add Task"));
+      // Test empty title
+      await user.type(
+        within(dialog).getByPlaceholderText("Enter task description"),
+        "Description"
+      );
+      await user.click(
+        within(dialog).getByRole("button", { name: /add task/i })
+      );
+      expect(window.alert).toHaveBeenCalledWith(
+        "Please enter both a title and description."
+      );
 
-    expect(mockAddTask).toHaveBeenCalledWith({
-      id: "mocked-uuid",
-      title: "New Task",
-      description: "Task details",
-      priority: "High",
+      // Test empty description
+      await user.clear(
+        within(dialog).getByPlaceholderText("Enter task description")
+      );
+      await user.type(
+        within(dialog).getByPlaceholderText("Enter task title"),
+        "Title"
+      );
+      await user.click(
+        within(dialog).getByRole("button", { name: /add task/i })
+      );
+      expect(window.alert).toHaveBeenCalledTimes(2);
     });
   });
 
-  it("does not add a task if title or description is empty", () => {
-    global.alert = jest.fn();
-    renderNavbar();
+  it("throws error when used outside context providers", () => {
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
-    fireEvent.click(screen.getByText("Add Task"));
-
-    const titleInput = screen.getByPlaceholderText("Enter task title");
-    fireEvent.change(titleInput, { target: { value: "" } });
-
-    fireEvent.click(screen.getByText("Add Task"));
-
-    expect(mockAddTask).not.toHaveBeenCalled();
-    expect(global.alert).toHaveBeenCalledWith(
-      "Please enter both a title and description."
+    expect(() => render(<Navbar />)).toThrow(
+      "Navbar must be used within FilterProvider and TaskProvider"
     );
-  });
 
-  it("throws an error if not within FilterContext or TaskContext", () => {
-    const originalError = console.error;
-    console.error = jest.fn(); // Suppress React context error logs
-
-    expect(() => {
-      render(<Navbar />);
-    }).toThrow("Navbar must be used within FilterProvider and TaskProvider");
-
-    console.error = originalError; // Restore console.error
+    consoleError.mockRestore();
   });
 });

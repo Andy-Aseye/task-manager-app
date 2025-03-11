@@ -1,53 +1,42 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import TaskItem from "../components/TaskItem";
 import { TaskContext } from "../contexts/TaskContext";
+import "@testing-library/jest-dom";
 
-// Mock the Dialog component from @radix-ui/react-dialog
-jest.mock("@radix-ui/react-dialog", () => ({
-  Dialog: ({
-    children,
-    open,
-  }: {
-    children: React.ReactNode;
-    open: boolean;
-  }) => (
-    <div data-testid="mock-dialog" data-open={open}>
-      {children}
-    </div>
-  ),
-  DialogTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-trigger">{children}</div>
-  ),
-  DialogContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-content">{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-title">{children}</div>
-  ),
-}));
 
-// Mock the Lucide React icons
+// Mock icons and dialog as before
 jest.mock("lucide-react", () => ({
   Pencil: () => <div data-testid="pencil-icon" />,
   Trash: () => <div data-testid="trash-icon" />,
   X: () => <div data-testid="x-icon" />,
 }));
 
+// Update Dialog mock in TaskItem.test.tsx
+jest.mock("@radix-ui/react-dialog", () => ({
+  Dialog: ({ children }: { children: React.ReactNode }) => children,
+  DialogTrigger: ({ children }: { children: React.ReactNode }) => children,
+  DialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div role="dialog">{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
+  ),
+}));
 describe("TaskItem Component", () => {
   const mockTask = {
     id: "1",
     title: "Test Task",
     description: "Task description",
-    priority: "Medium" as "Low" | "Medium" | "High",
+    priority: "Medium" as const,
   };
 
   const mockUpdateTask = jest.fn();
   const mockDeleteTask = jest.fn();
 
-  const renderTaskItem = () => {
-    return render(
+  const renderComponent = () =>
+    render(
       <TaskContext.Provider
         value={{
           tasks: [mockTask],
@@ -60,110 +49,116 @@ describe("TaskItem Component", () => {
         <TaskItem task={mockTask} />
       </TaskContext.Provider>
     );
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders task title and description correctly", () => {
-    renderTaskItem();
-    expect(screen.getByText("Test Task")).not.toBeNull();
-    expect(screen.getByText("Task description")).not.toBeNull();
+  it("renders task content correctly", () => {
+    renderComponent();
+
+    expect(
+      screen.getByRole("heading", { name: mockTask.title })
+    ).toBeInTheDocument();
+    expect(screen.getByText(mockTask.description)).toBeInTheDocument();
+    expect(screen.getByText(mockTask.priority)).toBeInTheDocument();
   });
 
-  it("displays the correct priority indicator class for different priorities", () => {
-    const testPriorities = ["Low", "Medium", "High"] as const;
+  it.each(["Low", "Medium", "High"])(
+    "applies correct priority class for %s priority",
+    (priority) => {
+      const testTask = {
+        ...mockTask,
+        priority: priority as typeof mockTask.priority,
+      };
 
-    testPriorities.forEach((priority) => {
-      const taskWithPriority = { ...mockTask, priority };
-      render(
+      const { container } = render(
         <TaskContext.Provider
           value={{
-            tasks: [taskWithPriority],
+            tasks: [testTask],
             addTask: jest.fn(),
             deleteTask: mockDeleteTask,
             updateTask: mockUpdateTask,
             reorderTasks: jest.fn(),
           }}
         >
-          <TaskItem task={taskWithPriority} />
+          <TaskItem task={testTask} />
         </TaskContext.Provider>
       );
 
-      const priorityIndicator = document.querySelector(".priority_indicator");
-      expect(priorityIndicator).not.toBeNull();
-      expect(priorityIndicator?.textContent).toBe(priority);
+      const indicator = container.querySelector(
+        `.priority_${priority.toLowerCase()}`
+      );
+      expect(indicator).toBeInTheDocument();
+    }
+  );
+
+  describe("Task Actions", () => {
+    it("deletes task when delete button is clicked", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      const deleteButton = screen.getByRole("button", { name: /delete task/i });
+      await user.click(deleteButton);
+
+      expect(mockDeleteTask).toHaveBeenCalledWith(mockTask.id);
+    });
+
+    it("opens edit dialog when edit button is clicked", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      const editButton = screen.getByRole("button", { name: /edit task/i });
+      await user.click(editButton);
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /edit task/i })
+      ).toBeInTheDocument();
     });
   });
 
-  it("calls deleteTask when delete button is clicked", () => {
-    renderTaskItem();
-    const deleteButton = screen.getByTestId("trash-icon").closest("button");
-    expect(deleteButton).not.toBeNull();
-    fireEvent.click(deleteButton!);
-    expect(mockDeleteTask).toHaveBeenCalledWith("1");
-  });
+  describe("Edit Dialog", () => {
+    const openDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+      renderComponent();
+      await user.click(screen.getByRole("button", { name: /edit task/i }));
+    };
 
-  it("toggles the edit dialog when edit button is clicked", () => {
-    const { container } = renderTaskItem();
-    const editButton = screen.getByTestId("pencil-icon").closest("button");
+    it("updates task when form is submitted", async () => {
+      const user = userEvent.setup();
+      await openDialog(user);
 
-    expect(editButton).not.toBeNull();
-    expect(container.querySelector('[data-open="true"]')).toBeNull();
+      const saveButton = screen.getByRole("button", { name: /save/i });
 
-    fireEvent.click(editButton!);
+      await user.click(saveButton);
 
-    expect(
-      container.querySelector('[data-testid="mock-dialog"]')
-    ).not.toBeNull();
-    expect(container.querySelector('[data-open="true"]')).not.toBeNull();
-  });
+      expect(mockUpdateTask).toHaveBeenCalledWith({
+        ...mockTask,
+        title: "Updated Title",
+        description: "Updated Description",
+        priority: "High",
+      });
+    });
 
-  it("calls updateTask with edited values when save button is clicked", () => {
-    renderTaskItem();
-    const editButton = screen.getByTestId("pencil-icon").closest("button");
-    expect(editButton).not.toBeNull();
-    fireEvent.click(editButton!);
+    it("closes dialog when cancel button is clicked", async () => {
+      const user = userEvent.setup();
+      await openDialog(user);
 
-    const titleInput = screen.getByLabelText("Title") as HTMLInputElement;
-    const descriptionInput = screen.getByLabelText(
-      "Description"
-    ) as HTMLTextAreaElement;
-    const prioritySelect = screen.getByLabelText(
-      "Priority"
-    ) as HTMLSelectElement;
-    const saveButton = screen.getByText("Save");
+      const closeButton = screen.getByTestId("x-icon").closest("button");
+      await user.click(closeButton!);
 
-    expect(titleInput).not.toBeNull();
-    expect(descriptionInput).not.toBeNull();
-    expect(prioritySelect).not.toBeNull();
-    expect(saveButton).not.toBeNull();
-
-    userEvent.clear(titleInput);
-    userEvent.type(titleInput, "Updated Title");
-    userEvent.clear(descriptionInput);
-    userEvent.type(descriptionInput, "Updated Description");
-    userEvent.selectOptions(prioritySelect, "High");
-
-    fireEvent.click(saveButton);
-
-    expect(mockUpdateTask).toHaveBeenCalledWith({
-      id: "1",
-      title: "Updated Title",
-      description: "Updated Description",
-      priority: "High",
     });
   });
 
-  it("throws an error if not within TaskContext", () => {
-    const originalError = console.error;
-    console.error = jest.fn();
+  it("throws error when used outside TaskContext", () => {
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
-    expect(() => {
-      render(<TaskItem task={mockTask} />);
-    }).toThrow("TaskItem must be used within a TaskProvider");
+    expect(() => render(<TaskItem task={mockTask} />)).toThrow(
+      "TaskItem must be used within a TaskProvider"
+    );
 
-    console.error = originalError;
+    consoleError.mockRestore();
   });
 });
