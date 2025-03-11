@@ -1,5 +1,7 @@
 Here is a simple guide to installing and running the Task Manager app:
 
+This is a link to the hosted site: https://task-manager-app-rose-tau.vercel.app/
+
 - First, copy the link from the GitHub clone dropdown:
 
 Run "git clone <link>" in the terminal of your IDE
